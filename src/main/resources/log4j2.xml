@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Property>
+        <Property name="APP_LOG_ROOT">logs</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <RollingFile name="appLog"
+                     fileName="${APP_LOG_ROOT}/smartfactory.log"
+                     filePattern="${APP_LOG_ROOT}/smartfactory-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <RollingFile name="serialLog"
+                     fileName="${APP_LOG_ROOT}/serial.log"
+                     filePattern="${APP_LOG_ROOT}/serial-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <RollingFile name="websocketLog"
+                     fileName="${APP_LOG_ROOT}/websocket.log"
+                     filePattern="${APP_LOG_ROOT}/websocket-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <RollingFile name="databaseLog"
+                     fileName="${APP_LOG_ROOT}/database.log"
+                     filePattern="${APP_LOG_ROOT}/database-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Serial Communication Logging -->
+        <Logger name="com.dashtech.smartfactory.service.SerialCommunicationService" level="DEBUG" additivity="false">
+            <AppenderRef ref="serialLog"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- WebSocket Logging -->
+        <Logger name="com.dashtech.smartfactory.websocket" level="DEBUG" additivity="false">
+            <AppenderRef ref="websocketLog"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Database Logging -->
+        <Logger name="com.dashtech.smartfactory.service.DatabaseService" level="DEBUG" additivity="false">
+            <AppenderRef ref="databaseLog"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- General Application Logging -->
+        <Logger name="com.dashtech.smartfactory" level="INFO" additivity="false">
+            <AppenderRef ref="appLog"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Root Logger -->
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="appLog"/>
+        </Root>
+    </Loggers>
+</Configuration>

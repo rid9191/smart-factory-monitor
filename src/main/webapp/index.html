@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Factory WebSocket Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .status-connected {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-disconnected {
+            background-color: #dc3545;
+            color: white;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sensor-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .log-area {
+            height: 300px;
+            font-family: monospace;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .serial-data {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .received-data {
+            color: #28a745;
+        }
+        .sent-data {
+            color: #007bff;
+        }
+        .error-data {
+            color: #dc3545;
+        }
+        .sensor-card {
+            transition: all 0.3s ease;
+        }
+        .sensor-card.updated {
+            background-color: #e8f5e9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col">
+                <h2>Smart Factory Monitor
+                    <span id="connectionStatus" class="status-badge status-disconnected">Disconnected</span>
+                </h2>
+            </div>
+        </div>
+
+        <!-- Serial Port Controls -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Serial Port Connection</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="portSelect" class="form-label">Port</label>
+                            <select class="form-select" id="portSelect">
+                                <option value="">Select a port...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="baudRate" class="form-label">Baud Rate</label>
+                            <select class="form-select" id="baudRate">
+                                <option value="9600">9600</option>
+                                <option value="19200">19200</option>
+                                <option value="38400">38400</option>
+                                <option value="57600">57600</option>
+                                <option value="115200">115200</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button id="connectBtn" class="btn btn-primary">Connect</button>
+                            <button id="disconnectBtn" class="btn btn-danger" disabled>Disconnect</button>
+                            <button id="refreshPortsBtn" class="btn btn-secondary">Refresh Ports</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Panel -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Commands</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Sensor Data Simulation -->
+                        <div class="mb-3">
+                            <label class="form-label">Send Sensor Data</label>
+                            <div class="input-group mb-2">
+                                <select class="form-select" id="sensorId" style="max-width: 120px;">
+                                    <option value="1">Sensor 1</option>
+                                    <option value="2">Sensor 2</option>
+                                    <option value="3">Sensor 3</option>
+                                    <option value="4">Sensor 4</option>
+                                </select>
+                                <select class="form-select" id="sensorType" style="max-width: 120px;">
+                                    <option value="1">Temperature</option>
+                                    <option value="2">Pressure</option>
+                                </select>
+                                <input type="number" class="form-control" id="sensorValue" placeholder="Value" step="0.1">
+                                <button class="btn btn-success" id="sendSensorBtn" disabled>Send</button>
+                            </div>
+                        </div>
+
+                        <!-- Actuator Control -->
+                        <div class="mb-3">
+                            <label class="form-label">Control Actuator</label>
+                            <div class="input-group mb-2">
+                                <select class="form-select" id="actuatorId" style="max-width: 120px;">
+                                    <option value="1">Actuator 1</option>
+                                    <option value="2">Actuator 2</option>
+                                    <option value="3">Actuator 3</option>
+                                    <option value="4">Actuator 4</option>
+                                </select>
+                                <select class="form-select" id="commandType" style="max-width: 120px;">
+                                    <option value="0">OFF</option>
+                                    <option value="1">ON</option>
+                                </select>
+                                <button class="btn btn-primary" id="sendActuatorBtn" disabled>Send</button>
+                            </div>
+                        </div>
+
+                        <!-- Raw Command Input -->
+                        <div class="mb-3">
+                            <label for="commandInput" class="form-label">Raw Command</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="commandInput" placeholder="Format: COMMAND/SENSOR ...">
+                                <button id="sendCommandBtn" class="btn btn-secondary" disabled>Send</button>
+                            </div>
+                            <small class="form-text text-muted">
+                                Format: SENSOR &lt;ID&gt; &lt;TYPE&gt; &lt;VALUE&gt; or COMMAND &lt;ID&gt; &lt;TYPE&gt;
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sensor Data Display -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Sensor Readings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="sensorReadings">
+                            <!-- Sensor cards will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Serial Data Display -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Serial Data Log</h5>
+                        <button id="clearLogBtn" class="btn btn-sm btn-secondary">Clear Log</button>
+                    </div>
+                    <div class="card-body">
+                        <pre id="serialLog" class="log-area"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        const log = document.getElementById('serialLog');
+        const portSelect = document.getElementById('portSelect');
+        const baudRate = document.getElementById('baudRate');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const refreshPortsBtn = document.getElementById('refreshPortsBtn');
+        const commandInput = document.getElementById('commandInput');
+        const sendCommandBtn = document.getElementById('sendCommandBtn');
+        const sendSensorBtn = document.getElementById('sendSensorBtn');
+        const sendActuatorBtn = document.getElementById('sendActuatorBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const sensorReadings = document.getElementById('sensorReadings');
+
+        // Store sensor data
+        const sensors = new Map();
+
+        function updateConnectionStatus(connected) {
+            connectionStatus.textContent = connected ? 'Connected' : 'Disconnected';
+            connectionStatus.className = 'status-badge ' + 
+                (connected ? 'status-connected' : 'status-disconnected');
+            
+            connectBtn.disabled = connected;
+            disconnectBtn.disabled = !connected;
+            sendCommandBtn.disabled = !connected;
+            sendSensorBtn.disabled = !connected;
+            sendActuatorBtn.disabled = !connected;
+            portSelect.disabled = connected;
+            baudRate.disabled = connected;
+        }
+
+        function appendLog(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const cssClass = type === 'received' ? 'received-data' : 
+                           type === 'sent' ? 'sent-data' : 
+                           type === 'error' ? 'error-data' : '';
+            
+            const formattedMessage = `<div class="${cssClass}">[${timestamp}] ${message}</div>`;
+            log.innerHTML += formattedMessage;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateSensorDisplay(sensorId, type, value) {
+            const key = `${sensorId}-${type}`;
+            const typeText = type === 1 ? 'Temperature' : 'Pressure';
+            const unit = type === 1 ? '°C' : 'kPa';
+            
+            let sensorCard = document.getElementById(`sensor-${key}`);
+            
+            if (!sensorCard) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-3';
+                col.innerHTML = `
+                    <div id="sensor-${key}" class="card sensor-card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Sensor ${sensorId} - ${typeText}</h6>
+                            <div class="sensor-value">${value.toFixed(2)} ${unit}</div>
+                            <div class="text-muted small">Last update: ${new Date().toLocaleTimeString()}</div>
+                        </div>
+                    </div>
+                `;
+                sensorReadings.appendChild(col);
+                sensorCard = col.firstElementChild;
+            } else {
+                sensorCard.querySelector('.sensor-value').textContent = `${value.toFixed(2)} ${unit}`;
+                sensorCard.querySelector('.text-muted.small').textContent = 
+                    `Last update: ${new Date().toLocaleTimeString()}`;
+                
+                // Flash effect
+                sensorCard.classList.add('updated');
+                setTimeout(() => sensorCard.classList.remove('updated'), 1000);
+            }
+        }
+
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/smartfactory`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                appendLog('WebSocket connected');
+                refreshPorts();
+            };
+            
+            ws.onclose = function() {
+                updateConnectionStatus(false);
+                appendLog('WebSocket disconnected');
+                ws = null;
+            };
+            
+            ws.onerror = function(error) {
+                appendLog('WebSocket error: ' + error);
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (e) {
+                    appendLog('Error parsing message: ' + e);
+                }
+            };
+        }
+
+        function handleMessage(data) {
+            switch(data.type) {
+                case 'ports':
+                    updatePortList(data.ports);
+                    break;
+                case 'connection':
+                    updateConnectionStatus(data.connected);
+                    if (data.connected) {
+                        appendLog(`Connected to ${data.port}`, 'info');
+                    }
+                    break;
+                case 'serialData':
+                    appendLog(`Received: ${JSON.stringify(data)}`, 'received');
+                    // Update sensor display with the new format
+                    const sensorId = data.sensorId;
+                    const type = data.type === 'Temperature' ? 1 : 2;
+                    const value = data.value;
+                    updateSensorDisplay(sensorId, type, value);
+                    break;
+                case 'error':
+                    appendLog('Error: ' + data.message, 'error');
+                    break;
+                default:
+                    appendLog('Unknown message type: ' + data.type, 'error');
+            }
+        }
+
+        function updatePortList(ports) {
+            portSelect.innerHTML = '<option value="">Select a port...</option>';
+            ports.forEach(port => {
+                const option = document.createElement('option');
+                option.value = port;
+                option.textContent = port;
+                portSelect.appendChild(option);
+            });
+        }
+
+        function refreshPorts() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'getports' }));
+            }
+        }
+
+        connectBtn.onclick = function() {
+            if (!portSelect.value) {
+                appendLog('Please select a port');
+                return;
+            }
+            
+            const message = {
+                type: 'connect',
+                port: portSelect.value,
+                baudRate: parseInt(baudRate.value)
+            };
+            
+            ws.send(JSON.stringify(message));
+        };
+
+        disconnectBtn.onclick = function() {
+            ws.send(JSON.stringify({ type: 'disconnect' }));
+        };
+
+        refreshPortsBtn.onclick = refreshPorts;
+
+        sendCommandBtn.onclick = function() {
+            const command = commandInput.value.trim();
+            if (!command) {
+                appendLog('Please enter a command', 'error');
+                return;
+            }
+            
+            const message = {
+                type: 'command',
+                command: command
+            };
+            
+            ws.send(JSON.stringify(message));
+            appendLog(`Sent: ${command}`, 'sent');
+            commandInput.value = '';
+        };
+
+        sendSensorBtn.onclick = function() {
+            const sensorId = document.getElementById('sensorId').value;
+            const sensorType = document.getElementById('sensorType').value;
+            const value = document.getElementById('sensorValue').value;
+
+            if (!value) {
+                appendLog('Please enter a sensor value', 'error');
+                return;
+            }
+
+            const command = `SENSOR ${sensorId} ${sensorType} ${value}`;
+            ws.send(JSON.stringify({ type: 'command', command }));
+            appendLog(`Sent: ${command}`, 'sent');
+            document.getElementById('sensorValue').value = '';
+        };
+
+        sendActuatorBtn.onclick = function() {
+            const actuatorId = document.getElementById('actuatorId').value;
+            const commandType = document.getElementById('commandType').value;
+
+            const message = {
+                type: 'command',
+                actuatorId: parseInt(actuatorId),
+                command: commandType === '1' ? 'ON' : 'OFF'
+            };
+            
+            ws.send(JSON.stringify(message));
+            appendLog(`Sent actuator command: ${JSON.stringify(message)}`, 'sent');
+        };
+
+        clearLogBtn.onclick = function() {
+            log.innerHTML = '';
+        };
+
+        commandInput.onkeypress = function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendCommandBtn.click();
+            }
+        };
+
+        // Initial connection
+        connect();
+    </script>
+</body>
+</html>
