@@ -1,16 +1,16 @@
 # Smart Factory Monitor
 
-A real-time industrial process monitoring system built with Java and WebSocket technology. This application provides a robust interface for monitoring sensor data and controlling industrial actuators through a web-based dashboard.
+A real-time industrial process monitoring & control interface built with Java 17, WebSockets, and bi-directional serial communication. The application streams live sensor data from shop-floor equipment, persists it in an embedded database, and exposes an operator dashboard that can also push control commands back to the factory line.
 
 ## Features
 
-- Real-time sensor data monitoring (Temperature, Pressure, Humidity)
-- Bi-directional serial communication with industrial equipment
+- Real-time sensor data monitoring 
+- Bi-directional serial communication
 - WebSocket-based real-time updates
 - Historical data visualization
 - Actuator control interface
 - Embedded H2 database for data persistence
-- Comprehensive logging system
+- Comprehensive logging system with Log4j2
 - Responsive web dashboard with Chart.js
 - Error handling and recovery mechanisms
 
@@ -40,17 +40,11 @@ A real-time industrial process monitoring system built with Java and WebSocket t
 
 1. Copy the WAR file to Tomcat's webapps directory:
    ```bash
-   cp target/smartfactory.war $TOMCAT_HOME/webapps/
+   Copy-Item "target/smartfactory.war" -Destination "$TOMCAT_HOME/webapps/ROOT.war" -Force
    ```
 
 2. Configure system properties in Tomcat's `setenv.sh` (Linux) or `setenv.bat` (Windows):
    ```bash
-   # Linux
-   export JAVA_OPTS="$JAVA_OPTS \
-       -Dsmartfactory.db.path=/path/to/data/smartfactory \
-       -Dsmartfactory.serial.port=COM1 \
-       -Dsmartfactory.serial.baudrate=9600"
-
    # Windows
    set JAVA_OPTS=%JAVA_OPTS% ^
        -Dsmartfactory.db.path=C:/path/to/data/smartfactory ^
@@ -60,13 +54,12 @@ A real-time industrial process monitoring system built with Java and WebSocket t
 
 3. Start Tomcat:
    ```bash
-   $TOMCAT_HOME/bin/startup.sh   # Linux
    %TOMCAT_HOME%\bin\startup.bat # Windows
    ```
 
 4. Access the application at:
    ```
-   http://localhost:8080/smartfactory/
+   http://localhost:8080/
    ```
 
 ## Configuration
@@ -151,27 +144,12 @@ For development and testing without actual hardware:
 
 1. Use a virtual serial port pair:
    - Windows: Use com0com
-   - Linux: Use socat
    ```bash
-   socat -d -d pty,raw,echo=0 pty,raw,echo=0
-   ```
 
 2. Use the test utility to simulate sensor data:
    ```bash
    java -cp target/smartfactory.jar com.dashtech.smartfactory.util.SerialSimulator
-   ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+   
 
 ## Support
 
