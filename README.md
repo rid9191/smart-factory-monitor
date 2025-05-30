@@ -133,10 +133,46 @@ src/
 
 ## Testing
 
-Run the test suite:
-```bash
-mvn test
-```
+Testing & Simulation
+
+Create a virtual serial pair using com0com:
+
+install PortName=COM10 PortName=COM11
+
+Launch the simulator on COM11:
+
+java -cp target/smart-factory-monitor.jar com.dashtech.sfm.util.SerialSimulator --port COM11
+
+In the web dashboard:
+
+Select COM10 from the dropdown
+
+Set baud rate to 9600
+
+Click Connect
+
+You should now see real-time sensor data and be able to send actuator commands.
+
+Installing Virtual COM Ports (Windows)
+
+If you see errors like Port COM5 is already used by another device, it means the port is taken by the system (e.g., Bluetooth).
+
+Use safe COM port numbers (e.g., COM10/COM11 or higher):
+
+Open the com0com Setup Command Prompt as Administrator
+
+Run:
+
+install PortName=COM10 PortName=COM11
+
+Confirm availability:
+
+mode COM10
+mode COM11
+
+Use COM10 in your app and COM11 in the simulator.
+
+Avoid low-numbered ports like COM1–COM6 which are often reserved or in use.
 
 ## Simulating Serial Communication
 
